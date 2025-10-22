@@ -109,10 +109,20 @@ isConstant (C _) = True
 isConstant _     = False
 
 coeffs :: Polynomial -> [Int]
-coeffs (Poly p) = map (\(Term c _) -> c) p
+coeffs (Mono (C c)) = [c]  -- Handle constant term
+coeffs (Mono (Term c _)) = [c]  -- Handle single term
+coeffs (Poly p) = map getCoeff p  -- Handle multiple terms
+  where
+    getCoeff (C c) = c
+    getCoeff (Term c _) = c
 
 variables :: Polynomial -> [[(Vari, Int)]]
-variables (Poly p) = map (\(Term _ vs) -> vs) p
+variables (Mono (C _)) = []  -- Constant term has no variables
+variables (Mono (Term _ vs)) = [vs]  -- Single term
+variables (Poly p) = map getVars p  -- Multiple terms
+  where
+    getVars (C _) = []  -- Constant term has no variables
+    getVars (Term _ vs) = vs
 
 normalize :: Polynomial -> Polynomial
 normalize (Mono t) = Mono t
