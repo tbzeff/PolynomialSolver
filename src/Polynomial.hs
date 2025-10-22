@@ -2,7 +2,8 @@ module Polynomial
     ( 
         Vari(..), Term(..), Polynomial(..),
         coeffs, variables,
-        prettyPrintTerm, prettyPrintPoly, normalize
+        prettyPrintTerm, prettyPrintPoly, normalize,
+        differentiate
     ) where
 
 import Data.List (sort, sortOn, groupBy, intercalate, partition)
@@ -149,3 +150,19 @@ normalize (Poly ts) =
                  then combinedTerms ++ [C combineConstants]
                  else combinedTerms
     in Poly result
+
+differentiateTerm :: Vari -> Term -> Term
+differentiateTerm _ (C _) = C 0  -- Derivative of a constant is zero
+differentiateTerm var (Term coeff vars) = 
+    case lookup var vars of
+        Nothing -> C 0  -- Variable not present, derivative is zero
+        Just exp ->
+            let newCoeff = coeff * exp
+                newVars = if exp == 1
+                          then filter ((/= var) . fst) vars  -- Remove variable if exponent becomes zero
+                          else map (\(v, e) -> if v == var then (v, e - 1) else (v, e)) vars
+            in Term newCoeff newVars
+
+differentiate :: Vari -> Polynomial -> Polynomial
+differentiate var (Mono t) = Mono (differentiateTerm var t)
+differentiate var (Poly ts) = normalize $ Poly (map (differentiateTerm var) ts) 
